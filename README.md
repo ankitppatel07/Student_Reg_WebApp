@@ -8,6 +8,7 @@
 
 ![Web App](https://github.com/ankitppatel07/Student_Reg_WebApp/blob/master/Screenshots/3.PNG)
 
+![Web App](https://github.com/ankitppatel07/Student_Reg_WebApp/blob/master/Screenshots/4.PNG)
 ## Instructions:
 - The repo consists of .sql files in data folder that consists of all the data and tables needed to create a MySQL database.
 
