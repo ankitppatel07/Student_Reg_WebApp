@@ -28,7 +28,6 @@ public class Stud_Reg_Servlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		PrintWriter out = response.getWriter();
-		System.out.println("In doGet");
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			con = DriverManager.getConnection(url, username, password);
@@ -40,23 +39,25 @@ public class Stud_Reg_Servlet extends HttpServlet {
 				rs = show_courses();
 				request.setAttribute("Result", rs);
 				request.setAttribute("func_call", "show_courses");
-				RequestDispatcher rd = request.getRequestDispatcher("display.jsp");
+				RequestDispatcher rd = request.getRequestDispatcher("r_home.jsp");
 				rd.forward(request, response);
-//				while(rs.next()) {  
-//					out.println(rs.getString(1)+"  "+rs.getInt(2)+"  "+rs.getString(3) + "<br>"); 
-//				}
-			} else if (value.contentEquals("find_ta")) {
-				String p1 = request.getParameter("classid").toString();
-				rs = find_ta(p1);
+			} 
+			else if (value.contentEquals("profile_info")) {
+				String p1 = request.getParameter("b_no").toString();
+				rs = profile_info(p1);
 
 				request.setAttribute("Result", rs);
-				request.setAttribute("func_call", "find_ta");
-				RequestDispatcher rd = request.getRequestDispatcher("display.jsp");
+				request.setAttribute("func_call", "profile_info");
+				RequestDispatcher rd = request.getRequestDispatcher("r_profile.jsp");
 				rd.forward(request, response);
-//					while(rs.next()) {  
-//						out.println(rs.getString(1)+"  "+rs.getString(2)+"  "+rs.getString(3) + "<br>"); 
-//					}
-
+			}
+			else if (value.contentEquals("find_ta")) {
+				String p1 = request.getParameter("classid").toString();
+				rs = find_ta(p1);
+				request.setAttribute("Result", rs);
+				request.setAttribute("func_call", "find_ta");
+				RequestDispatcher rd = request.getRequestDispatcher("r_class_info.jsp");
+				rd.forward(request, response);
 			} else if (value.contentEquals("find_prereq")) {
 				String p1 = request.getParameter("dept_code").toString();
 				int p2 = Integer.parseInt(request.getParameter("course_no"));
@@ -64,16 +65,8 @@ public class Stud_Reg_Servlet extends HttpServlet {
 
 				request.setAttribute("Result", rs);
 				request.setAttribute("func_call", "find_prereq");
-				RequestDispatcher rd = request.getRequestDispatcher("display.jsp");
+				RequestDispatcher rd = request.getRequestDispatcher("r_course_req.jsp");
 				rd.forward(request, response);
-//				if(rs==null) {
-//					out.println("Prerequisites do not exist or invalid course");					
-//				}
-//				else {
-//					while(rs.next()) {  
-//						out.println(rs.getString(3)+"  "+rs.getInt(4) + "<br>"); 
-//					}
-//				}
 			} else if (value.contentEquals("enroll_stud")) {
 				String p1 = request.getParameter("b_no").toString();
 				String p2 = request.getParameter("classid").toString();
@@ -81,17 +74,16 @@ public class Stud_Reg_Servlet extends HttpServlet {
 
 				request.setAttribute("Result", output);
 				request.setAttribute("func_call", "enroll_stud");
-				RequestDispatcher rd = request.getRequestDispatcher("display.jsp");
+				RequestDispatcher rd = request.getRequestDispatcher("r_enroll.jsp");
 				rd.forward(request, response);
-			} 
-			else if (value.contentEquals("drop_stud")) {
+			} else if (value.contentEquals("drop_stud")) {
 				String p1 = request.getParameter("b_no").toString();
 				String p2 = request.getParameter("classid").toString();
-				System.out.println("call form drop_stud");
+				System.out.println("call from drop_stud");
 				String output = drop_stud(p1, p2);
 				request.setAttribute("Result", output);
 				request.setAttribute("func_call", "drop_stud");
-				RequestDispatcher rd = request.getRequestDispatcher("display.jsp");
+				RequestDispatcher rd = request.getRequestDispatcher("r_disenroll.jsp");
 				rd.forward(request, response);
 			}
 
@@ -102,16 +94,46 @@ public class Stud_Reg_Servlet extends HttpServlet {
 	}
 
 	public ResultSet show_courses() throws IOException, SQLException {
-		System.out.println("aaaa");
 		sql = "SELECT dept_code, course_no, title FROM courses";
 		stmt = con.createStatement();
 		return stmt.executeQuery(sql);
 	}
 
-	public ResultSet find_ta(String v_cid) throws IOException, SQLException {
+	
+	public ResultSet profile_info(String p1) throws IOException, SQLException {
+		sql = "select count(*)"+
+				"from students s, enrollments e, classes c \r\n" + 
+				"where s.B_no=e.B_no and e.classid=c.classid and s.B_no=?";
+		pstmt = con.prepareStatement(sql);
+		pstmt.setString(1, p1);
+		rs = pstmt.executeQuery();
+		
+		while (rs.next()) {
+			if (rs.getInt(1) == 0) {
+				System.out.println("nulla");
+				return null;
+			} else {
+				break;
+			}
+		}
+		
+		
+		sql = "select s.B_no, s.first_name, s.last_name, s.status, \r\n" + 
+				"s.gpa, s.email, s.bdate, s.deptname, c.classid, c.dept_code, \r\n" + 
+				"c.course_no, c.sect_no, c.year, c.semester, e.lgrade \r\n" + 
+				"from students s, enrollments e, classes c \r\n" + 
+				"where s.B_no=e.B_no and e.classid=c.classid and s.B_no=?";
+		pstmt = con.prepareStatement(sql);
+		pstmt.setString(1, p1);
+		rs = pstmt.executeQuery();
+	
+		return rs;
+	}
+	
+	public ResultSet find_ta(String p1) throws IOException, SQLException {
 		sql = "SELECT count(*) FROM classes WHERE classid=?";
 		pstmt = con.prepareStatement(sql);
-		pstmt.setString(1, v_cid);
+		pstmt.setString(1, p1);
 		rs = pstmt.executeQuery();
 
 		while (rs.next()) {
@@ -124,7 +146,7 @@ public class Stud_Reg_Servlet extends HttpServlet {
 
 		sql = "SELECT count(*) FROM students s, classes c	WHERE c.classid = ? AND s.B_no = c.ta_B_no";
 		pstmt = con.prepareStatement(sql);
-		pstmt.setString(1, v_cid);
+		pstmt.setString(1, p1);
 		rs = pstmt.executeQuery();
 
 		while (rs.next()) {
@@ -138,7 +160,7 @@ public class Stud_Reg_Servlet extends HttpServlet {
 		sql = "SELECT c.ta_B_no, s.first_name, s.last_name FROM students s, classes c "
 				+ "WHERE c.classid = ? AND s.B_no = c.ta_B_no ;";
 		pstmt = con.prepareStatement(sql);
-		pstmt.setString(1, v_cid);
+		pstmt.setString(1, p1);
 		rs = pstmt.executeQuery();
 		return rs;
 	}
@@ -302,37 +324,37 @@ public class Stud_Reg_Servlet extends HttpServlet {
 				return "The drop is not permitted because another class the student registered uses it as a prerequisite.";
 			}
 		}
-			sql = "DELETE FROM enrollments WHERE B_no = ? AND classid = ?";
-			pstmt = con.prepareStatement(sql);
-			pstmt.setString(1, p1);
-			pstmt.setString(2, p2);
-			int i = pstmt.executeUpdate();
+		sql = "DELETE FROM enrollments WHERE B_no = ? AND classid = ?";
+		pstmt = con.prepareStatement(sql);
+		pstmt.setString(1, p1);
+		pstmt.setString(2, p2);
+		int i = pstmt.executeUpdate();
 
-			sql = "SELECT count(*) FROM enrollments WHERE B_no = ?";
-			pstmt = con.prepareStatement(sql);
-			pstmt.setString(1, p1);
-			rs = pstmt.executeQuery();
+		sql = "SELECT count(*) FROM enrollments WHERE B_no = ?";
+		pstmt = con.prepareStatement(sql);
+		pstmt.setString(1, p1);
+		rs = pstmt.executeQuery();
 
-			while (rs.next()) {
-				if (rs.getInt(1) == 0) {
-					return "Student successfully dropped from the course. The student is not enrolled in the class";
-				} else {
-					break;
-				}
+		while (rs.next()) {
+			if (rs.getInt(1) == 0) {
+				return "Student successfully dropped from the course. The student is not enrolled in any class";
+			} else {
+				break;
 			}
+		}
 
-			sql = "SELECT count(*) INTO check_capacity FROM enrollments WHERE classid = ?";
-			pstmt = con.prepareStatement(sql);
-			pstmt.setString(1, p2);
-			rs = pstmt.executeQuery();
+		sql = "SELECT count(*) FROM enrollments WHERE classid = ?";
+		pstmt = con.prepareStatement(sql);
+		pstmt.setString(1, p2);
+		rs = pstmt.executeQuery();
 
-			while (rs.next()) {
-				if (rs.getInt(1) == 0) {
-					return "Student successfully dropped from the course. The class now has no students";
-				} else {
-					break;
-				}
+		while (rs.next()) {
+			if (rs.getInt(1) == 0) {
+				return "Student successfully dropped from the course. The class now has no students";
+			} else {
+				break;
 			}
+		}
 
 		return "Student successfully dropped from the course.";
 	}

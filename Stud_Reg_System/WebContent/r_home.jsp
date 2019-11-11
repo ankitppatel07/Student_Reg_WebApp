@@ -28,7 +28,7 @@ h1{
 	</div>
 
 	<div class="container">
-		<div class="row" style="height: 500px">
+		<div class="row" style="height: 700px">
 			<div class="card col-md-4">
 				<div class="pt-4">
 					<div class="nav flex-column nav-pills" id="v-pills-tab"
@@ -54,9 +54,9 @@ h1{
 							data-toggle="pill" href="disenroll.jsp" role="tab"
 							aria-controls="v-pills-settings" aria-selected="false">Dis-enroll from a Class</a>
 					</div>
-					
 				</div>
 			</div>
+
 			<div class="card col-md-8">
 				<div class="form-group">
 					<form method="get" action="Stud_Reg_Servlet">
@@ -64,15 +64,55 @@ h1{
 							this semester</h5>
 						<button type="submit" class="btn btn-primary" name="call_value"
 							value="show_courses">Show Courses</button>
-						<br>
-						<br>
+						<br> <br>
 					</form>
 				</div>
-
-				<div class="card card-header">
-					<h5 class="text-dark"></h5>
+				<div class="card-header">
+					<h5 class="text-dark">Below is a list of courses offered this semester:</h5>
 				</div>
-				<div class="card-body"></div>
+				<div class="card-body">
+					<%@ page import="java.sql.*"%>
+					<%
+						if (request.getAttribute("func_call").equals("show_courses")) {
+							ResultSet rs = (ResultSet) request.getAttribute("Result");
+							out.println("<table class=\"table\">" + "<thead class=\"thead-dark\">" + "<tr>"
+									+ "	 <th scope=\"col\">Dept Code</th>" + "	<th scope=\"col\">Course No.</th>"
+									+ "	<th scope=\"col\">Course Title</th>" + " </tr>" + "</thead>");
+							while (rs.next()) {
+								out.println("<tbody>" + "<tr>" + "<td>" + rs.getString(1) + "</td>" + "<td>" + rs.getInt(2)
+										+ "</td>" + "<td>" + rs.getString(3) + "</td>" + "</tr>" + "</tbody>");
+							}
+						} else if (request.getAttribute("func_call").equals("find_ta")) {
+							ResultSet rs = (ResultSet) request.getAttribute("Result");
+							if (rs == null) {
+								out.println("<h5 class=\"mb-0 text-dark\">" + "Either the classid is invalid or the class has no TA"
+										+ "</h5><br>");
+							} else {
+								while (rs.next()) {
+									out.println("<h5 class=\"mb-0 text-dark\">" + rs.getString(1) + "  " + rs.getString(2) + "  "
+											+ rs.getString(3) + "</h5><br>");
+								}
+							}
+						} else if (request.getAttribute("func_call").equals("find_prereq")) {
+							ResultSet rs = (ResultSet) request.getAttribute("Result");
+							if (rs == null) {
+								out.println("<h5 class=\"mb-0 text-dark\">" + "Prerequisites do not exist or invalid course"
+										+ "</h5><br>");
+							} else {
+								while (rs.next()) {
+									out.println(
+											"<h5 class=\"mb-0 text-dark\">" + rs.getString(3) + "  " + rs.getInt(4) + "</h5><br>");
+								}
+							}
+						} else if (request.getAttribute("func_call").equals("enroll_stud")) {
+							String rs = (String) request.getAttribute("Result");
+							out.println("<h5 class=\"mb-0 text-dark\">" + rs + "</h5><br>");
+						} else if (request.getAttribute("func_call").equals("drop_stud")) {
+							String rs = (String) request.getAttribute("Result");
+							out.println("<h5 class=\"mb-0 text-dark\">" + rs + "</h5><br>");
+						}
+					%>
+				</div>
 			</div>
 		</div>
 	</div>
